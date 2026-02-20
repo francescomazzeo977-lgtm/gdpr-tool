@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Genesys GDPR Tool</title>
+  <style>
+    :root{
+      --bg:#0b1220; --stroke:rgba(255,255,255,.10);
+      --text:#e5e7eb; --muted:#9ca3af;
+      --primary:#3b82f6; --danger:#ef4444; --neutral:#111827;
+      --ok:#22c55e; --warn:#f59e0b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono";
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:var(--sans); color:var(--text);
+      padding:28px 16px;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(59,130,246,.25), transparent 55%),
+        radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.18), transparent 55%),
+        radial-gradient(900px 600px at 60% 90%, rgba(239,68,68,.12), transparent 55%),
+        var(--bg);
+    }
+    .wrap{ max-width:820px; margin:0 auto; }
+    .topbar{ display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:14px; }
+    .brand{ display:flex; gap:12px; align-items:center; }
+    .logo{
+      width:44px;height:44px;border-radius:12px; display:flex;align-items:center;justify-content:center;
+      background: linear-gradient(135deg, rgba(59,130,246,1), rgba(99,102,241,1));
+      box-shadow: 0 10px 30px rgba(59,130,246,.25); font-weight:800;
+    }
+    .title h1{ margin:0; font-size:18px; }
+    .title .sub{ margin-top:4px; color:var(--muted); font-size:12px; }
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 10px; border-radius:999px; border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04); color:var(--muted); font-size:12px; white-space:nowrap;
+      max-width: 46vw;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .card{
+      border:1px solid var(--stroke); border-radius:16px; overflow:hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .cardHeader{
+      padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+      border-bottom:1px solid var(--stroke); background: rgba(0,0,0,.18);
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px;
+      border-radius:999px; border:1px solid var(--stroke); font-size:12px; color:var(--muted);
+      max-width: 55vw;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:999px; background:var(--muted); }
+    .dot.ok{ background:var(--ok); } .dot.warn{ background:var(--warn); } .dot.err{ background:var(--danger); }
+    .cardBody{ padding:16px; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:720px){ .grid{ grid-template-columns:1fr; } }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    input{
+      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--stroke);
+      background: rgba(0,0,0,.22); color:var(--text); font-size:14px; outline:none;
+    }
+    input:focus{ border-color: rgba(59,130,246,.65); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
+    .row{ margin-top:12px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .check{ display:flex; gap:10px; align-items:center; color:var(--muted); font-size:12px; user-select:none; }
+    .check input{ width:16px; height:16px; }
+    .btns{ margin-top:12px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; }
+    @media (max-width:720px){ .btns{ grid-template-columns:1fr; } }
+    button{
+      border:1px solid var(--stroke); background: rgba(255,255,255,.06); color:var(--text);
+      padding:12px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;
+    }
+    button:hover{ background: rgba(255,255,255,.09); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+    .primary{ border-color: rgba(59,130,246,.45); background: rgba(59,130,246,.14); }
+    .danger { border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.14); }
+    .neutral{ border-color: rgba(255,255,255,.18); background: rgba(17,24,39,.30); }
+    .status{
+      margin-top:12px; border:1px solid var(--stroke); border-radius:14px; overflow:hidden;
+      background: rgba(0,0,0,.18);
+    }
+    .statusTop{
+      padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+      border-bottom:1px solid var(--stroke); background: rgba(255,255,255,.03);
+    }
+    pre{
+      margin:0; padding:12px; font-family:var(--mono); font-size:12px; line-height:1.35;
+      color:#dbeafe; white-space:pre-wrap; word-break:break-word; min-height:220px; max-height:360px; overflow:auto;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">GC</div>
+      <div class="title">
+        <h1>GDPR Delete Tool</h1>
+        <div class="sub">Localhost test – regione IE</div>
+      </div>
+    </div>
+    <div class="pill" title="Redirect URI (whitelist in OAuth)">
+      <span style="opacity:.85;">Redirect</span>
+      <span id="redirectLabel" style="color:var(--text);opacity:.9;"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHeader">
+      <div class="badge"><span class="dot" id="authDot"></span><span id="authText">Non autenticato</span></div>
+      <div class="badge"><span style="opacity:.85;">API</span><span id="apiLabel" style="color:var(--text);opacity:.9;"></span></div>
+    </div>
+
+    <div class="cardBody">
+      <div class="grid">
+        <div>
+          <label>Numero di telefono</label>
+          <input id="phone" placeholder="+393331234567" />
+        </div>
+        <div>
+          <label>Request ID (opzionale)</label>
+          <input id="requestId" placeholder="es. f96d..." />
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="check">
+          <input id="confirm" type="checkbox" />
+          Confermo la cancellazione (deleteConfirmed=true)
+        </label>
+        <div class="badge" id="lastBadge" style="display:none;" title="Salvato in sessione (tab corrente)">
+          <span class="dot warn"></span><span>Ultimo ID:</span><span id="lastId" style="color:var(--text);"></span>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button class="primary" id="loginBtn">Autentica</button>
+        <button class="danger" id="deleteBtn" disabled>Invia GDPR DELETE</button>
+        <button class="neutral" id="statusBtn" disabled>Controlla stato</button>
+        <button class="neutral" id="resetBtn">Reset sessione</button>
+      </div>
+
+      <div class="status">
+        <div class="statusTop">
+          <div class="badge"><span class="dot" id="statusDot"></span><span id="statusTitle">Pronto</span></div>
+          <div class="badge" id="pollBadge" style="display:none;"><span class="dot warn"></span><span>Polling attivo</span></div>
+        </div>
+        <pre id="out">Pronto. Clicca “Autentica”.</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // CONFIG
+  const GC_REGION = "mypurecloud.ie";
+  const CLIENT_ID = "447b6d75-36ba-4337-a5d3-3ee04e0e9d2f";
+
+  // STORAGE
+  const KEY_TOKEN = "gc_access_token";
+  const KEY_TOKEN_EXP = "gc_access_token_exp";
+  const KEY_LAST_REQ = "gc_last_request_id";
+
+  // DOM
+  const $ = (id) => document.getElementById(id);
+  const out = $("out");
+
+  const authDot = $("authDot"), authText = $("authText");
+  const statusDot = $("statusDot"), statusTitle = $("statusTitle");
+  const pollBadge = $("pollBadge");
+
+  const lastBadge = $("lastBadge"), lastIdEl = $("lastId");
+
+  const phoneEl = $("phone"), requestIdEl = $("requestId"), confirmEl = $("confirm");
+  const loginBtn = $("loginBtn"), deleteBtn = $("deleteBtn"), statusBtn = $("statusBtn"), resetBtn = $("resetBtn");
+
+  $("apiLabel").textContent = `https://api.${GC_REGION}`;
+
+  let lastRequestId = null;
+  let pollTimer = null;
+
+  function setDot(dot, kind){ dot.className = "dot" + (kind ? (" " + kind) : ""); }
+  function setStatus(kind, title){
+    setDot(statusDot, kind || "");
+    statusTitle.textContent = title || "";
+  }
+  function log(obj, kind="", title=""){
+    setStatus(kind, title || (kind==="ok"?"OK":kind==="err"?"Errore":""));
+    out.textContent = (typeof obj === "string") ? obj : JSON.stringify(obj, null, 2);
+    console.log(obj);
+  }
+
+  function redirectUri(){
+    return window.location.origin + window.location.pathname;
+  }
+  function bases(){
+    return { apiBase:`https://api.${GC_REGION}`, loginBase:`https://login.${GC_REGION}` };
+  }
+
+  function saveToken(token, expiresInSec){
+    const exp = expiresInSec ? (Date.now() + Number(expiresInSec)*1000) : null;
+    sessionStorage.setItem(KEY_TOKEN, token);
+    if (exp) sessionStorage.setItem(KEY_TOKEN_EXP, String(exp));
+  }
+  function loadToken(){
+    const t = sessionStorage.getItem(KEY_TOKEN);
+    const exp = sessionStorage.getItem(KEY_TOKEN_EXP);
+    if (!t) return null;
+    if (exp && Date.now() > Number(exp)) return null;
+    return t;
+  }
+
+  function clearSession(){
+    sessionStorage.removeItem(KEY_TOKEN);
+    sessionStorage.removeItem(KEY_TOKEN_EXP);
+    sessionStorage.removeItem(KEY_LAST_REQ);
+    lastRequestId = null;
+  }
+  function saveLastReq(id){
+    lastRequestId = id;
+    sessionStorage.setItem(KEY_LAST_REQ, id);
+    lastBadge.style.display = "inline-flex";
+    lastIdEl.textContent = id;
+    updateButtons();
+  }
+  function loadLastReq(){
+    const id = sessionStorage.getItem(KEY_LAST_REQ);
+    if (id){
+      lastRequestId = id;
+      lastBadge.style.display = "inline-flex";
+      lastIdEl.textContent = id;
+    }
+  }
+
+  // FIX: abilita/disabilita bottoni anche quando inserisci un Request ID manuale
+  function updateButtons(){
+    const authed = !!loadToken();
+    const hasId = !!(requestIdEl.value.trim() || lastRequestId);
+
+    deleteBtn.disabled = !authed;
+    statusBtn.disabled = !(authed && hasId);
+
+    if (authed) { setDot(authDot,"ok"); authText.textContent = "Autenticato"; }
+    else { setDot(authDot,"err"); authText.textContent = "Non autenticato"; }
+  }
+
+  function parseHash(){
+    const h = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+    const p = new URLSearchParams(h);
+    return {
+      accessToken: p.get("access_token"),
+      expiresIn: p.get("expires_in"),
+      error: p.get("error"),
+      errorDescription: p.get("error_description")
+    };
+  }
+
+  function authUrl(){
+    const { loginBase } = bases();
+    const u = new URL(loginBase + "/oauth/authorize");
+    u.searchParams.set("response_type","token");
+    u.searchParams.set("client_id", CLIENT_ID);
+    u.searchParams.set("redirect_uri", redirectUri());
+    u.searchParams.set("state", "gdpr-" + Math.random().toString(16).slice(2));
+    return u.toString();
+  }
+
+  async function gdprDelete(){
+    const token = loadToken();
+    if (!token) return log("Non autenticato: clicca “Autentica”.", "err", "Non autenticato");
+
+    const phone = phoneEl.value.trim();
+    if (!phone) return log("Inserisci un numero di telefono.", "warn", "Input richiesto");
+    if (!confirmEl.checked) return log("Spunta la conferma deleteConfirmed=true.", "warn", "Conferma richiesta");
+
+    const { apiBase } = bases();
+    const url = apiBase + "/api/v2/gdpr/requests?deleteConfirmed=true";
+    const body = { requestType:"GDPR_DELETE", subject:{ phoneNumbers:[phone] } };
+
+    log({ step:"POST", url, body }, "", "Invio...");
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) return log({ error:true, status:res.status, response:data }, "err", "Errore API");
+
+    if (data?.id) saveLastReq(data.id);
+    log({ ok:true, id:data.id, status:data.status, response:data }, "ok", "Inviato");
+  }
+
+  async function gdprStatus(id){
+    const token = loadToken();
+    if (!token) return log("Non autenticato: clicca “Autentica”.", "err", "Non autenticato");
+
+    const rid = (id || "").trim();
+    if (!rid) return log("Inserisci Request ID o invia prima una richiesta.", "warn", "ID richiesto");
+
+    const { apiBase } = bases();
+    const url = `${apiBase}/api/v2/gdpr/requests/${encodeURIComponent(rid)}`;
+
+    log({ step:"GET", url }, "", "Controllo...");
+    const res = await fetch(url, { headers:{ "Authorization":"Bearer " + token }});
+    const data = await res.json().catch(() => null);
+    if (!res.ok) return log({ error:true, status:res.status, response:data }, "err", "Errore API");
+
+    if (data?.id) saveLastReq(data.id);
+    log({ ok:true, id:data.id, status:data.status, response:data }, "ok", "Stato");
+    return data;
+  }
+
+  function startPolling(){
+    if (pollTimer) return;
+    pollBadge.style.display = "inline-flex";
+    pollTimer = setInterval(async () => {
+      const rid = (requestIdEl.value.trim() || lastRequestId || "").trim();
+      if (!rid) return;
+      try {
+        const data = await gdprStatus(rid);
+        const st = (data && data.status) ? String(data.status) : "";
+        if (st && st !== "DELETING" && st !== "PENDING") stopPolling();
+      } catch (_) {}
+    }, 10000);
+  }
+  function stopPolling(){
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    pollBadge.style.display = "none";
+  }
+
+  // INIT
+  $("redirectLabel").textContent = redirectUri();
+  loadLastReq();
+
+  const h = parseHash();
+  if (h.error){
+    log({ oauthError:h.error, description:h.errorDescription }, "err", "OAuth error");
+  } else if (h.accessToken){
+    saveToken(h.accessToken, h.expiresIn);
+    history.replaceState({}, document.title, redirectUri());
+  }
+
+  updateButtons();
+  if (loadToken()) log("✅ Autenticato. Inserisci telefono o Request ID e usa i pulsanti.", "ok", "Pronto");
+  else log("Pronto. Clicca “Autentica”.", "", "Pronto");
+
+  // EVENTS
+  loginBtn.addEventListener("click", () => location.assign(authUrl()));
+
+  deleteBtn.addEventListener("click", () => {
+    gdprDelete()
+      .then(() => startPolling())
+      .catch(e => log(String(e), "err", "Network"));
+  });
+
+  statusBtn.addEventListener("click", () => {
+    const rid = (requestIdEl.value.trim() || lastRequestId || "").trim();
+    gdprStatus(rid).catch(e => log(String(e), "err", "Network"));
+  });
+
+  requestIdEl.addEventListener("input", updateButtons);
+
+  resetBtn.addEventListener("click", () => {
+    stopPolling();
+    clearSession();
+    lastBadge.style.display = "none";
+    updateButtons();
+    log("Sessione pulita. Clicca “Autentica”.", "warn", "Reset");
+  });
+})();
+</script>
+</body>
+</html>
